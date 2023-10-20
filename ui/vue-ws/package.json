@@ -1,0 +1,21 @@
+{
+  "name": "vue-ws",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "sockjs-client": "^1.6.1",
+    "stompjs": "^2.3.3",
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.2.3",
+    "sass": "^1.69.4",
+    "vite": "^4.4.5"
+  }
+}
