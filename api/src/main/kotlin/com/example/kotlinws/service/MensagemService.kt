@@ -13,4 +13,9 @@ class MensagemService(
         template.convertAndSend("/mensagem", mensagem)
     }
 
+    fun sendMessageTo(chatId: String, mensagem: MensagemDto) {
+        val destination = "/mensagem/$chatId"
+        template.convertAndSend(destination, mensagem)
+    }
+
 }
