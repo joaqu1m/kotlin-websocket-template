@@ -1,51 +1,102 @@
-import React, { useState, useEffect } from 'react';
-import SockJS from 'sockjs-client/dist/sockjs';
-import { over } from 'stompjs';
+import React, { useState, useEffect } from "react";
+import SockJS from "sockjs-client/dist/sockjs";
+import { over } from "stompjs";
 
 const App = () => {
-  const [inputMensagem, setInputMensagem] = useState("");
-  const [mensagens, setMensagens] = useState([]);
+  const [inputMensagem1, setInputMensagem1] = useState("");
+  const [mensagens1, setMensagens1] = useState([]);
 
-  const sock = new SockJS("http://localhost:8080/ws");
-  const stompClient = over(sock);
-  stompClient.debug = () => {};
+  const [inputMensagem2, setInputMensagem2] = useState("");
+  const [mensagens2, setMensagens2] = useState([]);
+
+  const privateChatIdMock = "123";
+
+  const [stompClient, setStompClient] = useState(null);
 
   useEffect(() => {
-    stompClient.connect({}, () => {
-      stompClient.subscribe("/mensagem", ({ body }) => {
-        const receivedMessage = JSON.parse(body).mensagem;
-        setMensagens((prevMensagens) => [...prevMensagens, receivedMessage]);
-      });
-    });
+    const sock = new SockJS("http://localhost:8080/ws");
+    const stomp = over(sock);
+    stomp.debug = () => {};
+
+    setStompClient(stomp);
   }, []);
 
-  const sendMessage = () => {
-    if (inputMensagem) {
+  useEffect(() => {
+    stompClient?.connect({}, () => {
+      stompClient.subscribe("/mensagem", ({ body }) => {
+        const receivedMessage = JSON.parse(body).mensagem;
+        setMensagens1((prevMensagens) => [...prevMensagens, receivedMessage]);
+      });
+      stompClient.subscribe(`/mensagem/${privateChatIdMock}`, ({ body }) => {
+        const receivedMessage = JSON.parse(body).mensagem;
+        setMensagens2((prevMensagens) => [...prevMensagens, receivedMessage]);
+      });
+    });
+
+    return () => {
+      if (stompClient?.connected) {
+        stompClient.disconnect();
+      }
+    };
+  }, [stompClient]);
+
+  const sendMessage1 = () => {
+    if (inputMensagem1 && stompClient) {
       stompClient.send(
         "/app/mensagem",
         {},
-        JSON.stringify({ mensagem: inputMensagem })
+        JSON.stringify({ mensagem: inputMensagem1 })
       );
-      setInputMensagem("");
+      setInputMensagem1("");
+    }
+  };
+
+  const sendMessage2 = () => {
+    if (inputMensagem2 && stompClient) {
+      stompClient.send(
+        `/app/mensagem/${privateChatIdMock}`,
+        {},
+        JSON.stringify({ mensagem: inputMensagem2 })
+      );
+      setInputMensagem2("");
     }
   };
 
   return (
     <div className="ws-main">
-      <span>Chat</span>
       <div>
-        {mensagens.map((mensagem, i) => (
-          <div key={i}>{mensagem}</div>
-        ))}
+        <span>Chat geral</span>
+        <div>
+          {mensagens1.map((mensagem, i) => (
+            <div key={i}>{mensagem}</div>
+          ))}
+        </div>
+        <div>
+          <input
+            type="text"
+            value={inputMensagem1}
+            onChange={(e) => setInputMensagem1(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage1()}
+          />
+          <button onClick={sendMessage1}>Enviar mensagem</button>
+        </div>
       </div>
       <div>
-        <input
-          type="text"
-          value={inputMensagem}
-          onChange={(e) => setInputMensagem(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-        />
-        <button onClick={sendMessage}>Enviar mensagem</button>
+        <span>Chat privado</span>
+        <div>
+          {mensagens2.map((mensagem, i) => (
+            <div key={i}>{mensagem}</div>
+          ))}
+        </div>
+        <div>
+          <input
+            type="text"
+            value={inputMensagem2}
+            onChange={(e) => setInputMensagem2(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage2()}
+          />
+          <button onClick={sendMessage2}>Enviar mensagem</button>
+        </div>
       </div>
     </div>
   );

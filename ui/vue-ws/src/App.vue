@@ -1,10 +1,9 @@
 <script setup>
 import SockJS from "sockjs-client/dist/sockjs";
 import { over } from "stompjs";
-import { ref } from "vue";
+import { ref, onBeforeUnmount } from "vue";
 
-var sock = new SockJS("http://localhost:8080/ws");
-
+const sock = new SockJS("http://localhost:8080/ws");
 const stompClient = over(sock);
 stompClient.debug = () => {};
 
@@ -15,6 +14,10 @@ stompClient.connect({}, () => {
   stompClient.subscribe("/mensagem", ({ body }) => {
     mensagens.value.push(JSON.parse(body).mensagem);
   });
+});
+
+onBeforeUnmount(() => {
+  stompClient.disconnect();
 });
 
 const sendMessage = () => {
